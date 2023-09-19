@@ -1,6 +1,17 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
+const connection = require("./database/database");
+const Pergunta = require("./database/Pergunta");
+
+// DATABASE -> TESTE DE CONEXAO
+connection.authenticate()
+  .then(()=>{
+    console.log("Conexão Feita com o Banco!");
+  })
+  .catch((msgErro)=>{
+    console.log(msgErro);
+  });
 
 // MOSTRANDO PARA O EXPRESS USAR O EJS COMO VIEW ENGINE
 app.set("view engine", "ejs");
@@ -12,7 +23,11 @@ app.use(bodyParser.json());
 
 // ROTAS
 app.get("/", (req, res)=>{
-  res.render("index.ejs");
+  Pergunta.findAll({raw: true}).then(perguntas => {
+    res.render("index.ejs",{
+      perguntas: perguntas
+    });
+  });
 });
 
 app.get("/perguntar", (req, res)=>{
@@ -23,7 +38,12 @@ app.post("/salvarpergunta", (req, res)=>{
   let titulo = req.body.titulo;
   let descricao = req.body.descricao;
 
-  res.send(`formulário recebido! | titulo: ${titulo} descricao: ${descricao}`);
+  Pergunta.create({
+    titulo: titulo,
+    descricao: descricao
+  }).then(()=>{
+    res.redirect("/");
+  });
 });
 
 app.listen(8000, ()=>{
